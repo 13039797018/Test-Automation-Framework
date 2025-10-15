@@ -29,7 +29,7 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                // ✅ 使用虚拟环境中的 Python 运行
+                // ✅ 关键修改：直接调用虚拟环境中的 python
                 sh '.venv/bin/python run.py'
             }
         }
