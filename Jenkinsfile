@@ -66,5 +66,35 @@ pipeline {
         always {
             allure includeProperties: true, results: [[path: 'report/temp']]
         }
+
+        // ✅ 构建成功时发邮件
+        success {
+            emailext(
+                subject: "✅ 接口自动化测试成功 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <h2>🎉 测试通过！</h2>
+                    <p>项目：${env.JOB_NAME}</p>
+                    <p>构建编号：#${env.BUILD_NUMBER}</p>
+                    <p>报告链接：<a href="${env.BUILD_URL}allure">点击查看 Allure 报告</a></p>
+                """,
+                mimeType: 'text/html',
+                to: "13039797018@163.com"
+            )
+        }
+
+        // ❌ 构建失败时发邮件
+        failure {
+            emailext(
+                subject: "❌ 接口自动化测试失败 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <h2>❌ 构建失败！</h2>
+                    <p>项目：${env.JOB_NAME}</p>
+                    <p>构建编号：#${env.BUILD_NUMBER}</p>
+                    <p>控制台日志：<a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+                """,
+                mimeType: 'text/html',
+                to: "13039797018@163.com"
+            )
+        }
     }
 }
