@@ -14,11 +14,14 @@ class TestLogin:
     @pytest.mark.parametrize('base_info,testcase', get_testcase_yaml('./testcase/ProductManager/getProductList.yaml'))
     def test_get_product_list(self, base_info, testcase):
         allure.dynamic.title(testcase['case_name'])
+    
+        # 调用框架方法执行请求
         RequestBase().specification_yaml(base_info, testcase)
-        # ✅ 提取商品ID列表写入 extract.yaml
-        from common.readyaml import ReadYamlData
-        ids = [str(i["id"]) for i in res.json()["data"]["list"]]
-        ReadYamlData().write_yaml_data({"goodsId": ids})
+    
+        # ✅ 不需要手动解析 res，提取已经在框架中完成
+        # ✅ 如果你想确认写入成功，可以在此打印 extract.yaml
+        from conf.setting import FILE_PATH
+        print(open(FILE_PATH['EXTRACT'], encoding='utf-8').read())
 
     @allure.story(next(c_id) + "获取商品详情信息")
     @pytest.mark.run(order=2)
