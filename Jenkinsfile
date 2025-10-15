@@ -9,7 +9,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/13039797018/Test-Automation-Framework.git'
+                // ✅ 修复：指定正确的分支 main（原先默认找 master 报错）
+                git branch: 'main',
+                    url: 'https://github.com/13039797018/Test-Automation-Framework.git'
             }
         }
 
@@ -34,6 +36,7 @@ pipeline {
 
         stage('Generate Allure Report') {
             steps {
+                // ✅ allure CLI 会在 Jenkins 全局工具配置中自动安装
                 sh 'allure generate ${ALLURE_RESULTS} -o ${ALLURE_REPORT} --clean'
             }
         }
@@ -62,6 +65,7 @@ pipeline {
 
     post {
         always {
+            // ✅ Jenkins allure 插件自动发布报告
             allure includeProperties: true, results: [[path: 'report/temp']]
         }
     }
