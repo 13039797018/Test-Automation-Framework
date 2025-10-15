@@ -28,8 +28,10 @@ pipeline {
                 sh '''
                 if command -v uv &> /dev/null
                 then
+                    echo "🧩 Using uv to install dependencies..."
                     uv sync
                 else
+                    echo "🧩 Using pip to install dependencies..."
                     pip install -r requirements.txt || true
                 fi
                 '''
@@ -42,7 +44,9 @@ pipeline {
                 if [ -d ".venv" ]; then
                     . .venv/bin/activate
                 fi
-                python3 -m pytest --alluredir=${ALLURE_RESULTS}
+
+                echo "🚀 Starting pytest..."
+                python3 -m pytest --alluredir=${ALLURE_RESULTS} | tee pytest_result.log
                 '''
             }
         }
@@ -56,12 +60,6 @@ pipeline {
         stage('Archive Report') {
             steps {
                 sh '''
-                # 检查并安装 zip（免 sudo）
-                if ! command -v zip &> /dev/null; then
-                    echo "⚙️ Installing zip without sudo..."
-                    apt-get update -y && apt-get install -y zip || true
-                fi
-
                 cd report
                 if [ -d "allureReport" ]; then
                     zip -r allure-report.zip allureReport > /dev/null
@@ -81,22 +79,35 @@ pipeline {
         }
 
         success {
-            echo "✅ 所有测试均通过，标记为 SUCCESS"
-            script { currentBuild.result = 'SUCCESS' }
+            script {
+                currentBuild.result = 'SUCCESS'
+                echo "✅ 所有测试均通过，标记为 SUCCESS"
 
-            emailext(
-                subject: "✅ 接口自动化测试成功 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-                    <h2>🎉 所有接口测试通过！</h2>
-                    <p>项目名称：${env.JOB_NAME}</p>
-                    <p>构建编号：#${env.BUILD_NUMBER}</p>
-                    <p>报告链接：<a href="${env.BUILD_URL}allure">点击查看 Allure 报告</a></p>
-                    <p>如需离线查看，可下载附件：<b>allure-report.zip</b></p>
-                """,
-                mimeType: 'text/html',
-                to: "13039797018@163.com",
-                attachmentsPattern: "report/allure-report.zip"
-            )
+                // 解析 pytest 结果统计信息
+                def summary = sh(script: "grep -A 5 '自动化测试结果' pytest_result.log || true", returnStdout: true).trim()
+                def duration = sh(script: "grep '执行总时长' pytest_result.log | awk '{print \$2}' || true", returnStdout: true).trim()
+
+                emailext(
+                    subject: "✅ 接口自动化测试成功 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                        <h2>🎉 接口自动化测试成功！</h2>
+                        <p><b>项目：</b>${env.JOB_NAME}</p>
+                        <p><b>构建编号：</b>#${env.BUILD_NUMBER}</p>
+                        <p><b>执行耗时：</b>${duration} 秒</p>
+
+                        <h3>📊 测试统计：</h3>
+                        <pre>${summary}</pre>
+
+                        <p>📄 <b>Allure 报告链接：</b> 
+                            <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a>
+                        </p>
+                        <p>📦 <b>离线报告下载：</b> allure-report.zip（见附件）</p>
+                    """,
+                    mimeType: 'text/html',
+                    to: "13039797018@163.com",
+                    attachmentsPattern: "report/allure-report.zip"
+                )
+            }
         }
 
         failure {
@@ -104,9 +115,9 @@ pipeline {
                 subject: "❌ 接口自动化测试失败 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                     <h2>❌ 构建失败！</h2>
-                    <p>项目名称：${env.JOB_NAME}</p>
-                    <p>构建编号：#${env.BUILD_NUMBER}</p>
-                    <p>控制台日志：<a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+                    <p><b>项目：</b>${env.JOB_NAME}</p>
+                    <p><b>构建编号：</b>#${env.BUILD_NUMBER}</p>
+                    <p>🔗 <a href="${env.BUILD_URL}console">查看控制台日志</a></p>
                 """,
                 mimeType: 'text/html',
                 to: "13039797018@163.com"
