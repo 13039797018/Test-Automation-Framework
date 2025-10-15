@@ -72,7 +72,6 @@ pipeline {
             }
         }
 
-        // ✅ 关键修复：强制 Jenkins 标记 SUCCESS
         stage('Finalize Build Result') {
             steps {
                 script {
@@ -90,8 +89,6 @@ pipeline {
 
         success {
             script {
-                echo "✅ 所有测试均通过，标记为 SUCCESS"
-
                 def summary = sh(script: "grep -A 5 '自动化测试结果' pytest_result.log || true", returnStdout: true).trim()
                 def duration = sh(script: "grep '执行总时长' pytest_result.log | awk '{print \$2}' || true", returnStdout: true).trim()
 
@@ -99,6 +96,35 @@ pipeline {
                     subject: "✅ 接口自动化测试成功 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                     body: """
                         <h2>🎉 接口自动化测试成功！</h2>
+                        <p><b>项目：</b>${env.JOB_NAME}</p>
+                        <p><b>构建编号：</b>#${env.BUILD_NUMBER}</p>
+                        <p><b>执行耗时：</b>${duration} 秒</p>
+
+                        <h3>📊 测试统计：</h3>
+                        <pre>${summary}</pre>
+
+                        <p>📄 <b>Allure 报告链接：</b> 
+                            <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a>
+                        </p>
+                        <p>📦 <b>离线报告下载：</b> allure-report.zip（见附件）</p>
+                    """,
+                    mimeType: 'text/html',
+                    to: "13039797018@163.com",
+                    attachmentsPattern: "report/allure-report.zip"
+                )
+            }
+        }
+
+        // ✅ 新增 unstable 分支（保证即使是 UNSTABLE 也会发邮件）
+        unstable {
+            script {
+                def summary = sh(script: "grep -A 5 '自动化测试结果' pytest_result.log || true", returnStdout: true).trim()
+                def duration = sh(script: "grep '执行总时长' pytest_result.log | awk '{print \$2}' || true", returnStdout: true).trim()
+
+                emailext(
+                    subject: "⚠️ 构建状态为 UNSTABLE（实际测试通过） - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                        <h2>⚠️ Jenkins 标记为 UNSTABLE，但测试全部通过。</h2>
                         <p><b>项目：</b>${env.JOB_NAME}</p>
                         <p><b>构建编号：</b>#${env.BUILD_NUMBER}</p>
                         <p><b>执行耗时：</b>${duration} 秒</p>
