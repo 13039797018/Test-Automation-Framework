@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -6,6 +7,16 @@ pipeline {
         ALLURE_REPORT = 'report/allureReport'
     }
 
+    stages {
+        stage('Init Extract File') {
+            steps {
+                sh '''
+                mkdir -p extract
+                echo "cookie: null" > extract/extract.yaml
+                '''
+            }
+        }
+        
     stages {
         stage('Checkout') {
             steps {
@@ -98,3 +109,4 @@ pipeline {
         }
     }
 }
+
