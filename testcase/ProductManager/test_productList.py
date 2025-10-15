@@ -34,9 +34,10 @@ class TestLogin:
         goods_ids = ReadYamlData().get_extract_yaml("goodsId")
         assert goods_ids, "❌ extract.yaml 中未找到 goodsId，请确认上一步提取成功"
     
+        # ✅ 直接修改 base_info.url 和 testcase.json
         for gid in goods_ids:
-            base_info['request']['url'] = "/coupApply/cms/productDetail"
-            testcase['request']['json'] = {"pro_id": gid}
+            base_info['url'] = "/coupApply/cms/productDetail"
+            testcase['json'] = {"pro_id": gid}
             RequestBase().specification_yaml(base_info, testcase)
 
 
