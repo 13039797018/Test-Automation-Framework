@@ -47,6 +47,7 @@ class TestLogin:
 
         RequestBase().specification_yaml(base_info, testcase)
 
+
     # @allure.story('检查接口状态')
     # @pytest.mark.parametrize('params', get_testcase_yaml('./testcase/productManager/apiType.yaml'))
     # def test_get_api_type(self, params):
