@@ -62,22 +62,30 @@ class ReadYamlData:
         :param value: 写入数据，必须用dict
         :return:
         """
-
-        file = None
         file_path = FILE_PATH['EXTRACT']
+
+        # ✅ 若文件不存在则创建
         if not os.path.exists(file_path):
-            os.system(file_path)
+            logs.info(f"extract.yaml 不存在，自动创建：{file_path}")
+            with open(file_path, 'w', encoding='utf-8') as f:
+                yaml.safe_dump({}, f, allow_unicode=True)
+
         try:
-            file = open(file_path, 'a', encoding='utf-8')
+            # ✅ 先读取原内容
+            with open(file_path, 'r', encoding='utf-8') as f:
+                old_data = yaml.safe_load(f) or {}
+
+            # ✅ 合并更新
             if isinstance(value, dict):
-                write_data = yaml.dump(value, allow_unicode=True, sort_keys=False)
-                file.write(write_data)
+                old_data.update(value)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(old_data, f, allow_unicode=True, sort_keys=False)
+                logs.info(f"✅ 已写入 extract.yaml: {value}")
             else:
-                logs.info('写入[extract.yaml]的数据必须为dict格式')
-        except Exception:
-            logs.error(str(traceback.format_exc()))
-        finally:
-            file.close()
+                logs.error('写入 extract.yaml 的数据必须为 dict 格式')
+
+        except Exception as e:
+            logs.error(f"写入 extract.yaml 失败: {e}")
 
     def clear_yaml_data(self):
         """
@@ -91,25 +99,32 @@ class ReadYamlData:
     def get_extract_yaml(self, node_name, second_node_name=None):
         """
         用于读取接口提取的变量值
-        :param node_name:
-        :return:
         """
-        if os.path.exists(FILE_PATH['EXTRACT']):
-            pass
-        else:
-            logs.error('extract.yaml不存在')
-            file = open(FILE_PATH['EXTRACT'], 'w')
-            file.close()
-            logs.info('extract.yaml创建成功！')
+        file_path = FILE_PATH['EXTRACT']
+
+        # ✅ 文件不存在则自动创建空文件
+        if not os.path.exists(file_path):
+            logs.warning("extract.yaml 不存在，自动创建空文件")
+            with open(file_path, 'w', encoding='utf-8') as f:
+                yaml.safe_dump({}, f)
+
         try:
-            with open(FILE_PATH['EXTRACT'], 'r', encoding='utf-8') as rf:
-                ext_data = yaml.safe_load(rf)
+            with open(file_path, 'r', encoding='utf-8') as rf:
+                ext_data = yaml.safe_load(rf) or {}
+
+                # ✅ 一级 key
                 if second_node_name is None:
-                    return ext_data[node_name]
+                    value = ext_data.get(node_name)
                 else:
-                    return ext_data[node_name][second_node_name]
+                    value = ext_data.get(node_name, {}).get(second_node_name)
+
+                if value is None:
+                    logs.warning(f"【extract.yaml】未找到键：{node_name} (可能还未写入)")
+                return value
+
         except Exception as e:
-            logs.error(f"【extract.yaml】没有找到：{node_name},--%s" % e)
+            logs.error(f"读取 extract.yaml 出错: {e}")
+            return None
 
     def get_testCase_baseInfo(self, case_info):
         """
