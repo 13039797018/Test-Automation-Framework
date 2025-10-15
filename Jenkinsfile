@@ -32,13 +32,24 @@ pipeline {
                 else
                     pip install -r requirements.txt || true
                 fi
+
+                # ✅ 确保 Jenkins 环境安装 pytest & allure-pytest
+                pip install pytest allure-pytest || true
                 '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'pytest --alluredir=${ALLURE_RESULTS}'
+                sh '''
+                # ✅ 如果存在虚拟环境，则先激活
+                if [ -d ".venv" ]; then
+                    . .venv/bin/activate
+                fi
+
+                # ✅ 使用 python3 -m pytest 确保可执行
+                python3 -m pytest --alluredir=${ALLURE_RESULTS}
+                '''
             }
         }
 
