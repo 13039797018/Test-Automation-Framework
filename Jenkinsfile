@@ -38,11 +38,15 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                sh 'pytest --alluredir=${ALLURE_RESULTS}'
+                sh '''
+                if [ -d ".venv" ]; then
+                    . .venv/bin/activate
+                fi
+                python3 -m pytest --alluredir=${ALLURE_RESULTS}
+                '''
             }
         }
 
-        // ✅ 不再手动调用 allure 命令
         stage('Generate Allure Report') {
             steps {
                 echo "✅ Skip manual allure generation; Jenkins Allure plugin will handle it."
@@ -57,10 +61,9 @@ pipeline {
 
         success {
             emailext(
-                subject: "✅ 接口自动化测试成功 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                subject: "✅ 测试成功 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
-                    <h2>🎉 测试通过！</h2>
-                    <p>项目：${env.JOB_NAME}</p>
+                    <h2>🎉 所有接口测试通过！</h2>
                     <p>构建编号：#${env.BUILD_NUMBER}</p>
                     <p>报告链接：<a href="${env.BUILD_URL}allure">点击查看 Allure 报告</a></p>
                 """,
@@ -71,10 +74,9 @@ pipeline {
 
         failure {
             emailext(
-                subject: "❌ 接口自动化测试失败 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                subject: "❌ 测试失败 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                     <h2>❌ 构建失败！</h2>
-                    <p>项目：${env.JOB_NAME}</p>
                     <p>构建编号：#${env.BUILD_NUMBER}</p>
                     <p>控制台日志：<a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
                 """,
