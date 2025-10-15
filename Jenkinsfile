@@ -53,14 +53,13 @@ pipeline {
             }
         }
 
-        // ✅ 自动安装 zip 并压缩报告
         stage('Archive Report') {
             steps {
                 sh '''
-                # 自动安装 zip（WSL/Ubuntu）
+                # 检查并安装 zip（免 sudo）
                 if ! command -v zip &> /dev/null; then
-                    echo "🧩 Installing zip..."
-                    sudo apt-get update -y && sudo apt-get install -y zip
+                    echo "⚙️ Installing zip without sudo..."
+                    apt-get update -y && apt-get install -y zip || true
                 fi
 
                 cd report
