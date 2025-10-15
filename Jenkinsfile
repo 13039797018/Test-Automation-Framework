@@ -47,20 +47,28 @@ pipeline {
             }
         }
 
-        // ✅ 手动生成步骤跳过，由 Jenkins 插件处理
         stage('Generate Allure Report') {
             steps {
                 echo "✅ Skip manual allure generation; Jenkins Allure plugin will handle it."
             }
         }
 
-        // ✅ 自动压缩 Allure 报告为 ZIP
+        // ✅ 自动安装 zip 并压缩报告
         stage('Archive Report') {
             steps {
                 sh '''
+                # 自动安装 zip（WSL/Ubuntu）
+                if ! command -v zip &> /dev/null; then
+                    echo "🧩 Installing zip..."
+                    sudo apt-get update -y && sudo apt-get install -y zip
+                fi
+
                 cd report
                 if [ -d "allureReport" ]; then
                     zip -r allure-report.zip allureReport > /dev/null
+                    echo "✅ Allure report successfully compressed."
+                else
+                    echo "⚠️ allureReport directory not found. Skipping compression."
                 fi
                 '''
                 archiveArtifacts artifacts: 'report/allure-report.zip', fingerprint: true
