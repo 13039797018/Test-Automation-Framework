@@ -32,30 +32,20 @@ pipeline {
                 else
                     pip install -r requirements.txt || true
                 fi
-
-                # ✅ 确保 Jenkins 环境安装 pytest & allure-pytest
-                pip install pytest allure-pytest || true
                 '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh '''
-                # ✅ 如果存在虚拟环境，则先激活
-                if [ -d ".venv" ]; then
-                    . .venv/bin/activate
-                fi
-
-                # ✅ 使用 python3 -m pytest 确保可执行
-                python3 -m pytest --alluredir=${ALLURE_RESULTS}
-                '''
+                sh 'pytest --alluredir=${ALLURE_RESULTS}'
             }
         }
 
+        // ✅ 不再手动调用 allure 命令
         stage('Generate Allure Report') {
             steps {
-                sh 'allure generate ${ALLURE_RESULTS} -o ${ALLURE_REPORT} --clean'
+                echo "✅ Skip manual allure generation; Jenkins Allure plugin will handle it."
             }
         }
     }
