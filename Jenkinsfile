@@ -47,9 +47,23 @@ pipeline {
             }
         }
 
+        // ✅ 手动生成步骤跳过，由 Jenkins 插件处理
         stage('Generate Allure Report') {
             steps {
                 echo "✅ Skip manual allure generation; Jenkins Allure plugin will handle it."
+            }
+        }
+
+        // ✅ 自动压缩 Allure 报告为 ZIP
+        stage('Archive Report') {
+            steps {
+                sh '''
+                cd report
+                if [ -d "allureReport" ]; then
+                    zip -r allure-report.zip allureReport > /dev/null
+                fi
+                '''
+                archiveArtifacts artifacts: 'report/allure-report.zip', fingerprint: true
             }
         }
     }
@@ -60,23 +74,30 @@ pipeline {
         }
 
         success {
+            echo "✅ 所有测试均通过，标记为 SUCCESS"
+            script { currentBuild.result = 'SUCCESS' }
+
             emailext(
-                subject: "✅ 测试成功 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                subject: "✅ 接口自动化测试成功 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                     <h2>🎉 所有接口测试通过！</h2>
+                    <p>项目名称：${env.JOB_NAME}</p>
                     <p>构建编号：#${env.BUILD_NUMBER}</p>
                     <p>报告链接：<a href="${env.BUILD_URL}allure">点击查看 Allure 报告</a></p>
+                    <p>如需离线查看，可下载附件：<b>allure-report.zip</b></p>
                 """,
                 mimeType: 'text/html',
-                to: "13039797018@163.com"
+                to: "13039797018@163.com",
+                attachmentsPattern: "report/allure-report.zip"
             )
         }
 
         failure {
             emailext(
-                subject: "❌ 测试失败 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                subject: "❌ 接口自动化测试失败 - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
                     <h2>❌ 构建失败！</h2>
+                    <p>项目名称：${env.JOB_NAME}</p>
                     <p>构建编号：#${env.BUILD_NUMBER}</p>
                     <p>控制台日志：<a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
                 """,
