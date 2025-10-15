@@ -37,8 +37,17 @@ class TestLogin:
         # ✅ 直接修改 base_info.url 和 testcase.json
         for gid in goods_ids:
             base_info['url'] = "/coupApply/cms/productDetail"
-            testcase['json']['pro_id'] = gid  # ✅ 不要覆盖整个 test_case
-            RequestBase().specification_yaml(base_info, testcase)
+        
+            # ✅ 复制一份 testcase，避免原始 case 被 pop('case_name') 改动
+            case_copy = testcase.copy()
+            case_copy['json'] = case_copy['json'].copy()
+            case_copy['json']['pro_id'] = gid
+        
+            # ✅ 确保存在 case_name
+            if 'case_name' not in case_copy:
+                case_copy['case_name'] = '获取商品详情'
+        
+            RequestBase().specification_yaml(base_info, case_copy)
 
 
 
