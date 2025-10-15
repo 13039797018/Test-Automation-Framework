@@ -37,8 +37,9 @@ class TestLogin:
         # ✅ 直接修改 base_info.url 和 testcase.json
         for gid in goods_ids:
             base_info['url'] = "/coupApply/cms/productDetail"
-            testcase['json'] = {"pro_id": gid}
+            testcase['json']['pro_id'] = gid  # ✅ 不要覆盖整个 test_case
             RequestBase().specification_yaml(base_info, testcase)
+
 
 
     # @allure.story('检查接口状态')
