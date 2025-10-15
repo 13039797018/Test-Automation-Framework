@@ -23,28 +23,17 @@ class TestLogin:
     @allure.story(next(c_id) + "获取商品详情信息")
     @pytest.mark.run(order=2)
     @pytest.mark.parametrize('base_info,testcase', get_testcase_yaml('./testcase/ProductManager/productDetail.yaml'))
-    def test_get_product_detail(self):
-        allure.dynamic.title("获取商品详情（自动循环）")
+    def test_get_product_detail(self, base_info, testcase):
+        """自动循环测试商品详情"""
+        allure.dynamic.title(testcase['case_name'])
     
         from common.readyaml import ReadYamlData
         goods_ids = ReadYamlData().get_extract_yaml("goodsId")
         assert goods_ids, "❌ extract.yaml 中未找到 goodsId，请确认上一步提取成功"
     
         for gid in goods_ids:
-            base_info = {
-                "name": "获取商品详情",
-                "request": {
-                    "method": "POST",
-                    "url": "/coupApply/cms/productDetail"
-                }
-            }
-            testcase = {
-                "case_name": f"商品详情-{gid}",
-                "request": {
-                    "json": {"pro_id": gid}
-                }
-            }
-    
+            base_info['request']['url'] = "/coupApply/cms/productDetail"
+            testcase['request']['json'] = {"pro_id": gid}
             RequestBase().specification_yaml(base_info, testcase)
 
 
